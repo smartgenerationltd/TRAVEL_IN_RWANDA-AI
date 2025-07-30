@@ -12,6 +12,8 @@ import RwandaIcon from './components/icons/RwandaIcon';
 import PlusIcon from './components/icons/PlusIcon';
 import LoginScreen from './components/LoginScreen';
 import ArrowLeftIcon from './components/icons/ArrowLeftIcon';
+import CreditIcon from './components/icons/CreditIcon';
+import PaymentModal from './components/PaymentModal';
 
 const UI_TEXT: Record<string, Record<string, string>> = {
   title: { en: "Rwanda Travel Buddy", fr: "Copain de Voyage au Rwanda", rw: "Inshuti y'Urugendo mu Rwanda", sw: "Rafiki wa Kusafiri Rwanda", es: "Compañero de Viaje de Ruanda", de: "Ruanda Reise-Kumpel", zh: "卢旺达旅行伙伴", hi: "रवांडा यात्रा बडी", ar: "رفيق السفر في رواندا", pt: "Amigo de Viagem para Ruanda", ja: "ルワンダ旅行の相棒", ru: "Помощник в путешествии по Руанде" },
@@ -32,7 +34,16 @@ const UI_TEXT: Record<string, Record<string, string>> = {
   welcomeTitle: { en: "Welcome to your Rwanda Travel Buddy!", fr: "Bienvenue chez votre Copain de Voyage au Rwanda!", rw: "Ikaze ku Nshuti y'Urugendo yawe mu Rwanda!", sw: "Karibu kwa Rafiki yako wa Kusafiri Rwanda!", es: "¡Bienvenido a tu Compañero de Viaje de Ruanda!", de: "Willkommen bei deinem Ruanda Reise-Kumpel!", zh: "欢迎使用您的卢旺达旅行伙伴！", hi: "आपके रवांडा यात्रा बडी में आपका स्वागत है!", ar: "أهلاً بك في رفيق سفرك في رواندا!", pt: "Bem-vindo ao seu Amigo de Viagem para Ruanda!", ja: "あなたのルワンダ旅行の相棒へようこそ！", ru: "Добро пожаловать в ваш Помощник в путешествии по Руанде!" },
   welcomeSubtitle: { en: "I can help you plan your trip. Ask me anything about Rwanda!", fr: "Je peux vous aider à planifier votre voyage. Demandez-moi n'importe quoi sur le Rwanda!", rw: "Nshobora kugufasha gutegura urugendo rwawe. Mbaza ikibazo cyose ushaka kumenya ku Rwanda!", sw: "Ninaweza kukusaidia kupanga safari yako. Niulize chochote kuhusu Rwanda!", es: "Puedo ayudarte a planificar tu viaje. ¡Pregúntame cualquier cosa sobre Ruanda!", de: "Ich kann dir bei der Planung deiner Reise helfen. Frag mich alles über Ruanda!", zh: "我可以帮你规划行程。关于卢旺达的任何事情都可以问我！", hi: "मैं आपकी यात्रा की योजना बनाने में मदद कर सकता हूँ। रवांडा के बारे में मुझसे कुछ भी पूछें!", ar: "يمكنني مساعدتك في التخطيط لرحلتك. اسألني أي شيء عن رواندا!", pt: "Posso ajudar a planejar sua viagem. Pergunte-me qualquer coisa sobre Ruanda!", ja: "あなたの旅行の計画をお手伝いします。ルワンダについて何でも聞いてください！", ru: "Я могу помочь вам спланировать поездку. Спрашивайте меня о чем угодно в Руанде!" },
   promptHeader: { en: "Try one of these prompts:", fr: "Essayez l'une de ces suggestions :", rw: "Gerageza kimwe muri ibi bibazo:", sw: "Jaribu mojawapo ya vidokezo hivi:", es: "Prueba una de estas sugerencias:", de: "Versuche eine dieser Anregungen:", zh: "试试以下提示之一：", hi: "इनमें से कोई एक संकेत आज़माएँ:", ar: "جرب إحدى هذه المطالبات:", pt: "Experimente uma destas sugestões:", ja: "これらのプロンプトのいずれかをお試しください：", ru: "Попробуйте один из этих запросов:" },
-  inputPlaceholder: { en: "Ask about your trip to Rwanda...", fr: "Posez une question sur votre voyage au Rwanda...", rw: "Baza ikibazo ku rugendo rwawe mu Rwanda...", sw: "Uliza kuhusu safari yako ya kwenda Rwanda...", es: "Pregunta sobre tu viaje a Ruanda...", de: "Frage nach deiner Reise nach Ruanda...", zh: "询问关于您的卢ワンダ之旅...", hi: " अपनी रवांडा यात्रा के बारे में पूछें...", ar: "اسأل عن رحلتك إلى رواندا...", pt: "Pergunte sobre sua viagem para Ruanda...", ja: "ルワンダへの旅行について質問してください...", ru: "Спросите о вашей поездке в Руанду..." }
+  inputPlaceholder: { en: "Ask about your trip to Rwanda...", fr: "Posez une question sur votre voyage au Rwanda...", rw: "Baza ikibazo ku rugendo rwawe mu Rwanda...", sw: "Uliza kuhusu safari yako ya kwenda Rwanda...", es: "Pregunta sobre tu viaje a Ruanda...", de: "Frage nach deiner Reise nach Ruanda...", zh: "询问关于您的卢ワンダ之旅...", hi: " अपनी रवांडा यात्रा के बारे में पूछें...", ar: "اسأل عن رحلتك إلى رواندا...", pt: "Pergunte sobre sua viagem para Ruanda...", ja: "ルワンダへの旅行について質問してください...", ru: "Спросите о вашей поездке в Руанду..." },
+  creditsRemaining: { en: "Credits: {count}", fr: "Crédits : {count}", rw: "Inguzanyo: {count}", sw: "Salio: {count}", es: "Créditos: {count}", de: "Guthaben: {count}", zh: "积分: {count}", hi: "क्रेडिट: {count}", ar: "الرصيد: {count}", pt: "Créditos: {count}", ja: "クレジット: {count}", ru: "Кредиты: {count}" },
+  paymentTitle: { en: "Out of Credits", fr: "Crédits Épuisés", rw: "Inguzanyo Zashize", sw: "Huna Salio", es: "Sin Créditos", de: "Kein Guthaben mehr", zh: "积分不足", hi: "क्रेडिट खत्म", ar: "نفد الرصيد", pt: "Sem Créditos", ja: "クレジットがありません", ru: "Кредиты закончились" },
+  paymentSubtitle: { en: "You've used your 10 free messages. Please add credits to continue.", fr: "Vous avez utilisé vos 10 messages gratuits. Veuillez ajouter des crédits pour continuer.", rw: "Wakoresheje ubutumwa bwawe 10 bw'ubuntu. Shyiramo inguzanyo kugirango ukomeze.", sw: "Umetumia jumbe zako 10 za bure. Tafadhali ongeza salio ili uendelee.", es: "Has usado tus 10 mensajes gratuitos. Agrega créditos para continuar.", de: "Sie haben Ihre 10 kostenlosen Nachrichten aufgebraucht. Bitte fügen Sie Guthaben hinzu, um fortzufahren.", zh: "您已用完10条免费消息。请充值以继续。", hi: "आपने अपने 10 मुफ्त संदेशों का उपयोग कर लिया है। जारी रखने के लिए कृपया क्रेडिट जोड़ें।", ar: "لقد استخدمت رسائلك المجانية العشر. يرجى إضافة رصيد للمتابعة.", pt: "Você usou suas 10 mensagens gratuitas. Por favor, adicione créditos para continuar.", ja: "無料メッセージ10件を使い切りました。続けるにはクレジットを追加してください。", ru: "Вы использовали свои 10 бесплатных сообщений. Пожалуйста, пополните счет, чтобы продолжить." },
+  howToAddCredits: { en: "How to Add Credits", fr: "Comment Ajouter des Crédits", rw: "Uko washyiramo Inguzanyo", sw: "Jinsi ya Kuongeza Salio", es: "Cómo Añadir Créditos", de: "So fügen Sie Guthaben hinzu", zh: "如何充值", hi: "क्रेडिट कैसे जोड़ें", ar: "كيفية إضافة رصيد", pt: "Como Adicionar Créditos", ja: "クレジットの追加方法", ru: "Как пополнить счет" },
+  payWithMomo: { en: "Pay with MoMoPay", fr: "Payer avec MoMoPay", rw: "Ishyura na MoMoPay", sw: "Lipa na MoMoPay", es: "Pagar con MoMoPay", de: "Mit MoMoPay bezahlen", zh: "使用MoMoPay支付", hi: "मोमोपे से भुगतान करें", ar: "الدفع بواسطة MoMoPay", pt: "Pagar com MoMoPay", ja: "MoMoPayで支払う", ru: "Оплатить через MoMoPay" },
+  payWithBank: { en: "Pay with Equity Bank", fr: "Payer avec Equity Bank", rw: "Ishyura na Equity Bank", sw: "Lipa na Equity Bank", es: "Pagar con Equity Bank", de: "Mit Equity Bank bezahlen", zh: "使用Equity Bank支付", hi: "इक्विटी बैंक से भुगतान करें", ar: "الدفع بواسطة بنك Equity", pt: "Pagar com Equity Bank", ja: "Equity Bankで支払う", ru: "Оплатить через Equity Bank" },
+  paymentConfirmation: { en: "I've Sent Payment (Get 50 Credits)", fr: "J'ai envoyé le paiement (Obtenir 50 Crédits)", rw: "Nohereje Ubwishyu (Bona Inguzanyo 50)", sw: "Nimetuma Malipo (Pata Salio 50)", es: "He enviado el pago (Obtener 50 Créditos)", de: "Ich habe bezahlt (50 Credits erhalten)", zh: "我已付款（获取50积分）", hi: "मैंने भुगतान भेज दिया है (50 क्रेडिट प्राप्त करें)", ar: "لقد أرسلت الدفعة (احصل على 50 رصيدًا)", pt: "Enviei o pagamento (Obter 50 Créditos)", ja: "支払いを送信しました（50クレジット取得）", ru: "Я отправил платеж (Получить 50 кредитов)" },
+  copy: { en: "Copy", fr: "Copier", rw: "Koporora", sw: "Nakili", es: "Copiar", de: "Kopieren", zh: "复制", hi: "कॉपी", ar: "نسخ", pt: "Copiar", ja: "コピー", ru: "Копировать" },
+  copied: { en: "Copied!", fr: "Copié !", rw: "Byakoporowe!", sw: "Imenakiliwa!", es: "¡Copiado!", de: "Kopiert!", zh: "已复制！", hi: "कॉपी किया गया!", ar: "تم النسخ!", pt: "Copiado!", ja: "コピーしました！", ru: "Скопировано!" }
 };
 
 type Provider = 'google' | 'facebook' | 'apple' | 'linkedin' | 'instagram' | 'x' | 'email';
@@ -47,6 +58,8 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState('English');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
+  const [credits, setCredits] = useState(0);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const langCode = LANGUAGES.find(l => l.name === language)?.code || 'en';
@@ -83,10 +96,16 @@ const App: React.FC = () => {
   }, [messages]);
 
   const handleSendMessage = useCallback(async (prompt: string) => {
+    if (credits <= 0) {
+        setIsPaymentModalOpen(true);
+        return;
+    }
+    
     if (isLoading || !chat) {
       return;
     }
-
+    
+    setCredits(prev => prev - 1);
     setIsLoading(true);
     setError(null);
 
@@ -120,7 +139,7 @@ const App: React.FC = () => {
       if (newDestinations.length > 0) {
         setDestinations(prevDests => {
             const updatedDestinations = [...prevDests, ...newDestinations];
-            setCurrentDestinationIndex(prevDests.length); // Set index to the first of the newly added destinations
+            setCurrentDestinationIndex(prevDests.length);
             return updatedDestinations;
         });
       }
@@ -128,11 +147,11 @@ const App: React.FC = () => {
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "An unexpected error occurred.";
       setError(`Error from AI: ${errorMessage}`);
-      setMessages(prev => prev.slice(0, -1)); // Remove the placeholder
+      setMessages(prev => prev.slice(0, -1));
     } finally {
       setIsLoading(false);
     }
-  }, [chat, isLoading]);
+  }, [chat, isLoading, credits]);
   
   const handleGetDirections = useCallback((dest: Destination) => {
       if (!navigator.geolocation) {
@@ -171,16 +190,22 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUser(null);
+    setCredits(0);
   };
 
   const handleLoginSuccess = (provider: Provider) => {
-    // In a real app, you'd handle the auth flow here.
-    // For this demo, we'll just simulate a successful login.
     setUser({ name: provider });
+    setCredits(10);
     setIsLoggedIn(true);
+  };
+
+  const handlePurchaseCredits = () => {
+    setCredits(prev => prev + 50);
+    setIsPaymentModalOpen(false);
   };
   
   const currentDestination = destinations[currentDestinationIndex] || null;
+  const isInputDisabled = isLoading || (messages.length > 0 && credits <= 0);
 
   if (!isLoggedIn) {
     return (
@@ -247,6 +272,11 @@ const App: React.FC = () => {
                 <option key={lang.code} value={lang.name}>{lang.name}</option>
               ))}
             </select>
+            <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+            <div className="flex items-center space-x-2 text-gray-700 dark:text-gray-300" title={`${credits} credits remaining`}>
+                <CreditIcon className="h-5 w-5 text-yellow-500" />
+                <span className="font-semibold text-sm">{t('creditsRemaining').replace('{count}', String(credits))}</span>
+            </div>
             {user && (
               <div className="flex items-center space-x-3">
                 <div className="h-8 w-8 rounded-full bg-blue-200 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold" title={`Logged in with ${user.name}`}>
@@ -299,11 +329,27 @@ const App: React.FC = () => {
                     <p>{error}</p>
                     </div>
                 )}
-                <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} placeholder={t('inputPlaceholder')} />
+                <ChatInput onSendMessage={handleSendMessage} disabled={isInputDisabled} placeholder={t('inputPlaceholder')} />
                 </div>
             </footer>
         </div>
       </div>
+      {isPaymentModalOpen && (
+          <PaymentModal
+            onClose={() => setIsPaymentModalOpen(false)}
+            onPurchase={handlePurchaseCredits}
+            texts={{
+                paymentTitle: t('paymentTitle'),
+                paymentSubtitle: t('paymentSubtitle'),
+                howToAddCredits: t('howToAddCredits'),
+                payWithMomo: t('payWithMomo'),
+                payWithBank: t('payWithBank'),
+                paymentConfirmation: t('paymentConfirmation'),
+                copy: t('copy'),
+                copied: t('copied'),
+            }}
+          />
+      )}
     </div>
   );
 };
