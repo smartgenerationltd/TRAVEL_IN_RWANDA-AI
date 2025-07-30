@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Chat } from '@google/genai';
 import { Message, Destination } from './types';
-import { getSystemInstruction, EXAMPLE_PROMPTS, LANGUAGES } from './constants';
+import { getSystemInstruction, LANGUAGES } from './constants';
 import { geminiService } from './services/geminiService';
 import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
@@ -14,6 +14,8 @@ import LoginScreen from './components/LoginScreen';
 import ArrowLeftIcon from './components/icons/ArrowLeftIcon';
 import CreditIcon from './components/icons/CreditIcon';
 import PaymentModal from './components/PaymentModal';
+import UpgradeIcon from './components/icons/UpgradeIcon';
+import CrownIcon from './components/icons/CrownIcon';
 
 const UI_TEXT: Record<string, Record<string, string>> = {
   title: { en: "Rwanda Travel Buddy", fr: "Copain de Voyage au Rwanda", rw: "Inshuti y'Urugendo mu Rwanda", sw: "Rafiki wa Kusafiri Rwanda", es: "Compañero de Viaje de Ruanda", de: "Ruanda Reise-Kumpel", zh: "卢旺达旅行伙伴", hi: "रवांडा यात्रा बडी", ar: "رفيق السفر في رواندا", pt: "Amigo de Viagem para Ruanda", ja: "ルワンダ旅行の相棒", ru: "Помощник в путешествии по Руанде" },
@@ -34,16 +36,31 @@ const UI_TEXT: Record<string, Record<string, string>> = {
   welcomeTitle: { en: "Welcome to your Rwanda Travel Buddy!", fr: "Bienvenue chez votre Copain de Voyage au Rwanda!", rw: "Ikaze ku Nshuti y'Urugendo yawe mu Rwanda!", sw: "Karibu kwa Rafiki yako wa Kusafiri Rwanda!", es: "¡Bienvenido a tu Compañero de Viaje de Ruanda!", de: "Willkommen bei deinem Ruanda Reise-Kumpel!", zh: "欢迎使用您的卢旺达旅行伙伴！", hi: "आपके रवांडा यात्रा बडी में आपका स्वागत है!", ar: "أهلاً بك في رفيق سفرك في رواندا!", pt: "Bem-vindo ao seu Amigo de Viagem para Ruanda!", ja: "あなたのルワンダ旅行の相棒へようこそ！", ru: "Добро пожаловать в ваш Помощник в путешествии по Руанде!" },
   welcomeSubtitle: { en: "I can help you plan your trip. Ask me anything about Rwanda!", fr: "Je peux vous aider à planifier votre voyage. Demandez-moi n'importe quoi sur le Rwanda!", rw: "Nshobora kugufasha gutegura urugendo rwawe. Mbaza ikibazo cyose ushaka kumenya ku Rwanda!", sw: "Ninaweza kukusaidia kupanga safari yako. Niulize chochote kuhusu Rwanda!", es: "Puedo ayudarte a planificar tu viaje. ¡Pregúntame cualquier cosa sobre Ruanda!", de: "Ich kann dir bei der Planung deiner Reise helfen. Frag mich alles über Ruanda!", zh: "我可以帮你规划行程。关于卢旺达的任何事情都可以问我！", hi: "मैं आपकी यात्रा की योजना बनाने में मदद कर सकता हूँ। रवांडा के बारे में मुझसे कुछ भी पूछें!", ar: "يمكنني مساعدتك في التخطيط لرحلتك. اسألني أي شيء عن رواندا!", pt: "Posso ajudar a planejar sua viagem. Pergunte-me qualquer coisa sobre Ruanda!", ja: "あなたの旅行の計画をお手伝いします。ルワンダについて何でも聞いてください！", ru: "Я могу помочь вам спланировать поездку. Спрашивайте меня о чем угодно в Руанде!" },
   promptHeader: { en: "Try one of these prompts:", fr: "Essayez l'une de ces suggestions :", rw: "Gerageza kimwe muri ibi bibazo:", sw: "Jaribu mojawapo ya vidokezo hivi:", es: "Prueba una de estas sugerencias:", de: "Versuche eine dieser Anregungen:", zh: "试试以下提示之一：", hi: "इनमें से कोई एक संकेत आज़माएँ:", ar: "جرب إحدى هذه المطالبات:", pt: "Experimente uma destas sugestões:", ja: "これらのプロンプトのいずれかをお試しください：", ru: "Попробуйте один из этих запросов:" },
+  prompt1: { en: "Tell me about Rwanda's national parks.", fr: "Parlez-moi des parcs nationaux du Rwanda.", rw: "Mbwira ibya za pariki z'igihugu z'u Rwanda.", sw: "Niambie kuhusu mbuga za kitaifa za Rwanda.", es: "Háblame de los parques nacionales de Ruanda.", de: "Erzählen Sie mir von Ruandas Nationalparks.", zh: "告诉我关于卢旺达国家公园的信息。", hi: "मुझे रवांडा के राष्ट्रीय उद्यानों के बारे में बताएं।", ar: "أخبرني عن المتنزهات الوطنية في رواندا.", pt: "Fale-me sobre os parques nacionais de Ruanda.", ja: "ルワンダの国立公園について教えてください。", ru: "Расскажите мне о национальных парках Руанды." },
+  prompt2: { en: "Where is the Kigali Genocide Memorial?", fr: "Où se trouve le Mémorial du génocide de Kigali ?", rw: "Urwibutso rwa Jenoside rwa Kigali ruri he?", sw: "Kumbukumbu ya Mauaji ya Kimbari ya Kigali iko wapi?", es: "¿Dónde está el Memorial del Genocidio de Kigali?", de: "Wo ist das Kigali Genocide Memorial?", zh: "基加利种族灭绝纪念馆在哪里？", hi: "किगाली नरसंहार स्मारक कहाँ है?", ar: "أين يقع نصب كيغالي التذكاري للإبادة الجماعية؟", pt: "Onde fica o Memorial do Genocídio de Kigali?", ja: "キガリ虐殺記念館はどこにありますか？", ru: "Где находится Мемориал геноцида в Кигали?" },
+  prompt3: { en: "What are the top 5 things to do in Kigali?", fr: "Quelles sont les 5 meilleures choses à faire à Kigali ?", rw: "Ni ibihe bintu 5 by'ingenzi byo gukorera i Kigali?", sw: "Mambo 5 bora ya kufanya Kigali ni yapi?", es: "¿Cuáles son las 5 mejores cosas que hacer en Kigali?", de: "Was sind die Top 5 Aktivitäten in Kigali?", zh: "在基加利最值得做的5件事是什么？", hi: "किगाली में करने के लिए शीर्ष 5 चीजें क्या हैं?", ar: "ما هي أفضل 5 أشياء يمكن القيام بها في كيغالي؟", pt: "Quais são as 5 melhores coisas para fazer em Kigali?", ja: "キガリでやるべきことトップ5は何ですか？", ru: "Чем заняться в Кигали: топ-5?" },
+  prompt4: { en: "How do I get from Kigali to Volcanoes National Park?", fr: "Comment puis-je me rendre de Kigali au Parc National des Volcans ?", rw: "Ngera nte muri Pariki y'Igihugu y'Ibirunga mvuye i Kigali?", sw: "Ninawezaje kufika kutoka Kigali hadi Hifadhi ya Taifa ya Volcanoes?", es: "¿Cómo llego desde Kigali al Parque Nacional de los Volcanes?", de: "Wie komme ich von Kigali zum Volcanoes-Nationalpark?", zh: "我如何从基加利前往火山国家公园？", hi: "मैं किगाली से ज्वालामुखी राष्ट्रीय उद्यान कैसे पहुँचूँ?", ar: "كيف أصل من كيغالي إلى حديقة البراكين الوطنية؟", pt: "Como chego de Kigali ao Parque Nacional dos Vulcões?", ja: "キガリから火山国立公園への行き方を教えてください。", ru: "Как добраться из Кигали в Национальный парк вулканов?" },
+  prompt5: { en: "Tell me about Rwandan food.", fr: "Parlez-moi de la nourriture rwandaise.", rw: "Mbwira ku byerekeye amafunguro yo mu Rwanda.", sw: "Niambie kuhusu chakula cha Rwanda.", es: "Háblame de la comida ruandesa.", de: "Erzählen Sie mir vom ruandischen Essen.", zh: "告诉我关于卢旺达美食的信息。", hi: "मुझे रवांडा के भोजन के बारे में बताएं।", ar: "أخبرني عن الطعام الرواندي.", pt: "Fale-me sobre a comida ruandesa.", ja: "ルワンダの食べ物について教えてください。", ru: "Расскажите мне о руандийской еде." },
+  prompt6: { en: "Is it safe to travel in Rwanda?", fr: "Est-il sûr de voyager au Rwanda ?", rw: "Gusura u Rwanda biratekanye?", sw: "Je, ni salama kusafiri nchini Rwanda?", es: "¿Es seguro viajar en Ruanda?", de: "Ist es sicher, in Ruanda zu reisen?", zh: "在卢旺达旅行安全吗？", hi: "क्या रवांडा में यात्रा करना सुरक्षित है?", ar: "هل السفر في رواندا آمن؟", pt: "É seguro viajar em Ruanda?", ja: "ルワンダの旅行は安全ですか？", ru: "Безопасно ли путешествовать по Руанде?" },
+  prompt7: { en: "Can you teach me a few basic Kinyarwanda phrases?", fr: "Pouvez-vous m'apprendre quelques phrases de base en kinyarwanda ?", rw: "Wanyigisha interuro nkeya z'ibanze mu Kinyarwanda?", sw: "Unaweza kunifundisha misemo michache ya msingi ya Kinyarwanda?", es: "¿Puedes enseñarme algunas frases básicas en kinyarwanda?", de: "Können Sie mir ein paar grundlegende Kinyarwanda-Sätze beibringen?", zh: "你能教我一些基本的基尼亚卢旺达语短语吗？", hi: "क्या आप मुझे कुछ बुनियादी किन्यारवांडा वाक्यांश सिखा सकते हैं?", ar: "هل يمكنك تعليمي بعض العبارات الأساسية في الكينيارواندية؟", pt: "Você pode me ensinar algumas frases básicas em quiniaruanda?", ja: "基本的なキニヤルワンダ語のフレーズをいくつか教えてもらえますか？", ru: "Можете научить меня нескольким основным фразам на киньяруанда?" },
+  prompt8: { en: "Tell me about Rwanda's museums and their locations.", fr: "Parlez-moi des musées du Rwanda et de leurs emplacements.", rw: "Mbwira ingoro ndangamurage z'u Rwanda n'aho ziherereye.", sw: "Niambie kuhusu makumbusho ya Rwanda na maeneo yake.", es: "Háblame de los museos de Ruanda y sus ubicaciones.", de: "Erzählen Sie mir von Ruandas Museen und ihren Standorten.", zh: "告诉我关于卢旺达博物馆及其位置的信息。", hi: "मुझे रवांडा के संग्रहालयों और उनके स्थानों के बारे में बताएं।", ar: "أخبرني عن متاحف رواندا ومواقعها.", pt: "Fale-me sobre os museus de Ruanda e suas localizações.", ja: "ルワンダの博物館とその場所について教えてください。", ru: "Расскажите мне о музеях Руанды и их расположении." },
   inputPlaceholder: { en: "Ask about your trip to Rwanda...", fr: "Posez une question sur votre voyage au Rwanda...", rw: "Baza ikibazo ku rugendo rwawe mu Rwanda...", sw: "Uliza kuhusu safari yako ya kwenda Rwanda...", es: "Pregunta sobre tu viaje a Ruanda...", de: "Frage nach deiner Reise nach Ruanda...", zh: "询问关于您的卢ワンダ之旅...", hi: " अपनी रवांडा यात्रा के बारे में पूछें...", ar: "اسأل عن رحلتك إلى رواندا...", pt: "Pergunte sobre sua viagem para Ruanda...", ja: "ルワンダへの旅行について質問してください...", ru: "Спросите о вашей поездке в Руанду..." },
+  upgradeToContinue: { en: "Upgrade to Premium to continue", fr: "Passez à Premium pour continuer", rw: "Simbukira kuri Premium kugirango ukomeze", sw: "Boresha hadi Premium ili uendelee", es: "Actualiza a Premium para continuar", de: "Auf Premium upgraden, um fortzufahren", zh: "升级到高级版以继续", hi: "जारी रखने के लिए प्रीमियम में अपग्रेड करें", ar: "الترقية إلى بريميوم للمتابعة", pt: "Atualize para Premium para continuar", ja: "続行するにはプレミアムにアップグレードしてください", ru: "Перейдите на Премиум, чтобы продолжить" },
   creditsRemaining: { en: "Credits: {count}", fr: "Crédits : {count}", rw: "Inguzanyo: {count}", sw: "Salio: {count}", es: "Créditos: {count}", de: "Guthaben: {count}", zh: "积分: {count}", hi: "क्रेडिट: {count}", ar: "الرصيد: {count}", pt: "Créditos: {count}", ja: "クレジット: {count}", ru: "Кредиты: {count}" },
-  paymentTitle: { en: "Out of Credits", fr: "Crédits Épuisés", rw: "Inguzanyo Zashize", sw: "Huna Salio", es: "Sin Créditos", de: "Kein Guthaben mehr", zh: "积分不足", hi: "क्रेडिट खत्म", ar: "نفد الرصيد", pt: "Sem Créditos", ja: "クレジットがありません", ru: "Кредиты закончились" },
-  paymentSubtitle: { en: "You've used your 10 free messages. Please add credits to continue.", fr: "Vous avez utilisé vos 10 messages gratuits. Veuillez ajouter des crédits pour continuer.", rw: "Wakoresheje ubutumwa bwawe 10 bw'ubuntu. Shyiramo inguzanyo kugirango ukomeze.", sw: "Umetumia jumbe zako 10 za bure. Tafadhali ongeza salio ili uendelee.", es: "Has usado tus 10 mensajes gratuitos. Agrega créditos para continuar.", de: "Sie haben Ihre 10 kostenlosen Nachrichten aufgebraucht. Bitte fügen Sie Guthaben hinzu, um fortzufahren.", zh: "您已用完10条免费消息。请充值以继续。", hi: "आपने अपने 10 मुफ्त संदेशों का उपयोग कर लिया है। जारी रखने के लिए कृपया क्रेडिट जोड़ें।", ar: "لقد استخدمت رسائلك المجانية العشر. يرجى إضافة رصيد للمتابعة.", pt: "Você usou suas 10 mensagens gratuitas. Por favor, adicione créditos para continuar.", ja: "無料メッセージ10件を使い切りました。続けるにはクレジットを追加してください。", ru: "Вы использовали свои 10 бесплатных сообщений. Пожалуйста, пополните счет, чтобы продолжить." },
-  howToAddCredits: { en: "How to Add Credits", fr: "Comment Ajouter des Crédits", rw: "Uko washyiramo Inguzanyo", sw: "Jinsi ya Kuongeza Salio", es: "Cómo Añadir Créditos", de: "So fügen Sie Guthaben hinzu", zh: "如何充值", hi: "क्रेडिट कैसे जोड़ें", ar: "كيفية إضافة رصيد", pt: "Como Adicionar Créditos", ja: "クレジットの追加方法", ru: "Как пополнить счет" },
+  paymentTitle: { en: "Upgrade to Premium", fr: "Passez à Premium", rw: "Simbukira kuri Premium", sw: "Boresha hadi Premium", es: "Actualizar a Premium", de: "Auf Premium upgraden", zh: "升级到高级版", hi: "प्रीमियम में अपग्रेड करें", ar: "الترقية إلى بريميوم", pt: "Atualizar para Premium", ja: "プレミアムにアップグレード", ru: "Перейти на Премиум" },
+  paymentSubtitle: { en: "You've used your free messages. Upgrade for unlimited conversations!", fr: "Vous avez utilisé vos messages gratuits. Passez à Premium pour des conversations illimitées !", rw: "Wakoresheje ubutumwa bwawe bw'ubuntu. Simbukira kuri Premium kugirango ube n'ibiganiro bitagira iherezo!", sw: "Umetumia jumbe zako za bure. Boresha kwa mazungumzo yasiyo na kikomo!", es: "Has usado tus mensajes gratuitos. ¡Actualiza para tener conversaciones ilimitadas!", de: "Sie haben Ihre kostenlosen Nachrichten aufgebraucht. Upgraden Sie für unbegrenzte Unterhaltungen!", zh: "您已用完免费消息。升级以进行无限次对话！", hi: "आपने अपने मुफ्त संदेशों का उपयोग कर लिया है। असीमित बातचीत के लिए अपग्रेड करें!", ar: "لقد استخدمت رسائلك المجانية. قم بالترقية لمحادثات غير محدودة!", pt: "Você usou suas mensagens gratuitas. Atualize para conversas ilimitadas!", ja: "無料メッセージを使い切りました。無制限の会話のためにアップグレードしてください！", ru: "Вы использовали свои бесплатные сообщения. Обновитесь для неограниченных разговоров!" },
+  howToUpgrade: { en: "How to Upgrade", fr: "Comment Mettre à Niveau", rw: "Uko wasimbukira ku isumbuye", sw: "Jinsi ya Kuboresha", es: "Cómo Actualizar", de: "So führen Sie ein Upgrade durch", zh: "如何升级", hi: "कैसे अपग्रेड करें", ar: "كيفية الترقية", pt: "Como Atualizar", ja: "アップグレード方法", ru: "Как обновиться" },
+  premiumPrice: { en: "Pay $10 for one month of Premium Access.", fr: "Payez 10 $ pour un mois d'accès Premium.", rw: "Ishyura $10 ukwezi kumwe kugirango ukoreshe Premium.", sw: "Lipa $10 kwa mwezi mmoja wa Ufikiaji wa Premium.", es: "Paga $10 por un mes de acceso Premium.", de: "Zahlen Sie 10 $ für einen Monat Premium-Zugang.", zh: "支付10美元，获取一个月的高级访问权限。", hi: "एक महीने के प्रीमियम एक्सेस के लिए $10 का भुगतान करें।", ar: "ادفع 10 دولارات للوصول إلى العضوية المميزة لمدة شهر واحد.", pt: "Pague $10 por um mês de acesso Premium.", ja: "1か月間のプレミアムアクセスに10ドルを支払います。", ru: "Заплатите 10 долларов за один месяц Премиум-доступа." },
   payWithMomo: { en: "Pay with MoMoPay", fr: "Payer avec MoMoPay", rw: "Ishyura na MoMoPay", sw: "Lipa na MoMoPay", es: "Pagar con MoMoPay", de: "Mit MoMoPay bezahlen", zh: "使用MoMoPay支付", hi: "मोमोपे से भुगतान करें", ar: "الدفع بواسطة MoMoPay", pt: "Pagar com MoMoPay", ja: "MoMoPayで支払う", ru: "Оплатить через MoMoPay" },
   payWithBank: { en: "Pay with Equity Bank", fr: "Payer avec Equity Bank", rw: "Ishyura na Equity Bank", sw: "Lipa na Equity Bank", es: "Pagar con Equity Bank", de: "Mit Equity Bank bezahlen", zh: "使用Equity Bank支付", hi: "इक्विटी बैंक से भुगतान करें", ar: "الدفع بواسطة بنك Equity", pt: "Pagar com Equity Bank", ja: "Equity Bankで支払う", ru: "Оплатить через Equity Bank" },
-  paymentConfirmation: { en: "I've Sent Payment (Get 50 Credits)", fr: "J'ai envoyé le paiement (Obtenir 50 Crédits)", rw: "Nohereje Ubwishyu (Bona Inguzanyo 50)", sw: "Nimetuma Malipo (Pata Salio 50)", es: "He enviado el pago (Obtener 50 Créditos)", de: "Ich habe bezahlt (50 Credits erhalten)", zh: "我已付款（获取50积分）", hi: "मैंने भुगतान भेज दिया है (50 क्रेडिट प्राप्त करें)", ar: "لقد أرسلت الدفعة (احصل على 50 رصيدًا)", pt: "Enviei o pagamento (Obter 50 Créditos)", ja: "支払いを送信しました（50クレジット取得）", ru: "Я отправил платеж (Получить 50 кредитов)" },
+  paymentConfirmation: { en: "I've Sent Payment (Upgrade to Premium)", fr: "J'ai envoyé le paiement (Mettre à Niveau vers Premium)", rw: "Nohereje Ubwishyu (Simbukira kuri Premium)", sw: "Nimetuma Malipo (Boresha hadi Premium)", es: "He enviado el pago (Actualizar a Premium)", de: "Ich habe bezahlt (Auf Premium upgraden)", zh: "我已付款（升级到高级版）", hi: "मैंने भुगतान भेज दिया है (प्रीमियम में अपग्रेड करें)", ar: "لقد أرسلت الدفعة (الترقية إلى بريميوم)", pt: "Enviei o pagamento (Atualizar para Premium)", ja: "支払いを送信しました（プレミアムにアップグレード）", ru: "Я отправил платеж (Перейти на Премиум)" },
   copy: { en: "Copy", fr: "Copier", rw: "Koporora", sw: "Nakili", es: "Copiar", de: "Kopieren", zh: "复制", hi: "कॉपी", ar: "نسخ", pt: "Copiar", ja: "コピー", ru: "Копировать" },
-  copied: { en: "Copied!", fr: "Copié !", rw: "Byakoporowe!", sw: "Imenakiliwa!", es: "¡Copiado!", de: "Kopiert!", zh: "已复制！", hi: "कॉपी किया गया!", ar: "تم النسخ!", pt: "Copiado!", ja: "コピーしました！", ru: "Скопировано!" }
+  copied: { en: "Copied!", fr: "Copié !", rw: "Byakoporowe!", sw: "Imenakiliwa!", es: "¡Copiado!", de: "Kopiert!", zh: "已复制！", hi: "कॉपी किया गया!", ar: "تم النسخ!", pt: "Copiado!", ja: "コピーしました！", ru: "Скопировано!" },
+  upgrade: { en: "Upgrade", fr: "Mettre à niveau", rw: "Simbukira ku isumbuye", sw: "Boresha", es: "Actualizar", de: "Upgrade", zh: "升级", hi: "अपग्रेड", ar: "ترقية", pt: "Atualizar", ja: "アップグレード", ru: "Обновить" },
+  premium: { en: "Premium", fr: "Premium", rw: "Premium", sw: "Premium", es: "Premium", de: "Premium", zh: "高级会员", hi: "प्रीमियम", ar: "بريميوم", pt: "Premium", ja: "プレミアム", ru: "Премиум" },
+  getDirections: { en: "Get Directions", fr: "Obtenir l'itinéraire", rw: "Shaka Inzira", sw: "Pata Maelekezo", es: "Obtener Direcciones", de: "Route berechnen", zh: "获取路线", hi: "दिशा - निर्देश प्राप्त करें", ar: "احصل على الاتجاهات", pt: "Obter Direções", ja: "経路を取得", ru: "Проложить маршрут" },
+  prevDestination: { en: "Previous destination", fr: "Destination précédente", rw: "Aho uheruka", sw: "Unakoenda awali", es: "Destino anterior", de: "Vorheriges Ziel", zh: "上一个目的地", hi: "पिछला गंतव्य", ar: "الوجهة السابقة", pt: "Destino anterior", ja: "前の目的地", ru: "Предыдущий пункт" },
+  nextDestination: { en: "Next destination", fr: "Destination suivante", rw: "Aho utaha", sw: "Unakoenda ijayo", es: "Próximo destino", de: "Nächstes Ziel", zh: "下一个目的地", hi: "अगला गंतव्य", ar: "الوجهة التالية", pt: "Próximo destino", ja: "次の目的地", ru: "Следующий пункт" },
 };
 
 type Provider = 'google' | 'facebook' | 'apple' | 'linkedin' | 'instagram' | 'x' | 'email';
@@ -59,6 +76,7 @@ const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<{ name: string } | null>(null);
   const [credits, setCredits] = useState(0);
+  const [isPremium, setIsPremium] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -96,7 +114,7 @@ const App: React.FC = () => {
   }, [messages]);
 
   const handleSendMessage = useCallback(async (prompt: string) => {
-    if (credits <= 0) {
+    if (!isPremium && credits <= 0) {
         setIsPaymentModalOpen(true);
         return;
     }
@@ -105,7 +123,9 @@ const App: React.FC = () => {
       return;
     }
     
-    setCredits(prev => prev - 1);
+    if (!isPremium) {
+        setCredits(prev => prev - 1);
+    }
     setIsLoading(true);
     setError(null);
 
@@ -151,7 +171,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [chat, isLoading, credits]);
+  }, [chat, isLoading, credits, isPremium]);
   
   const handleGetDirections = useCallback((dest: Destination) => {
       if (!navigator.geolocation) {
@@ -191,21 +211,34 @@ const App: React.FC = () => {
     setIsLoggedIn(false);
     setUser(null);
     setCredits(0);
+    setIsPremium(false);
   };
 
   const handleLoginSuccess = (provider: Provider) => {
     setUser({ name: provider });
     setCredits(10);
+    setIsPremium(false);
     setIsLoggedIn(true);
   };
 
-  const handlePurchaseCredits = () => {
-    setCredits(prev => prev + 50);
+  const handlePurchasePremium = () => {
+    setIsPremium(true);
     setIsPaymentModalOpen(false);
   };
   
   const currentDestination = destinations[currentDestinationIndex] || null;
-  const isInputDisabled = isLoading || (messages.length > 0 && credits <= 0);
+  const isInputDisabled = isLoading || (!isPremium && credits <= 0);
+
+  const examplePrompts = [
+    t('prompt1'),
+    t('prompt2'),
+    t('prompt3'),
+    t('prompt4'),
+    t('prompt5'),
+    t('prompt6'),
+    t('prompt7'),
+    t('prompt8'),
+  ];
 
   if (!isLoggedIn) {
     return (
@@ -272,11 +305,31 @@ const App: React.FC = () => {
                 <option key={lang.code} value={lang.name}>{lang.name}</option>
               ))}
             </select>
+            {!isPremium && (
+                 <button
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="flex items-center space-x-2 px-3 py-2 bg-yellow-400/80 hover:bg-yellow-500/80 dark:bg-yellow-500/80 dark:hover:bg-yellow-600/80 rounded-md text-sm font-bold text-yellow-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
+                    aria-label={t('upgrade')}
+                >
+                    <UpgradeIcon className="h-5 w-5" />
+                    <span>{t('upgrade')}</span>
+                </button>
+            )}
+
             <div className="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
-            <div className="flex items-center space-x-2 text-gray-700 dark:text-gray-300" title={`${credits} credits remaining`}>
-                <CreditIcon className="h-5 w-5 text-yellow-500" />
-                <span className="font-semibold text-sm">{t('creditsRemaining').replace('{count}', String(credits))}</span>
-            </div>
+
+            {isPremium ? (
+              <div className="flex items-center space-x-2 text-yellow-500" title="Premium Access">
+                <CrownIcon className="h-6 w-6" />
+                <span className="font-semibold text-sm">{t('premium')}</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2 text-gray-700 dark:text-gray-300" title={`${credits} credits remaining`}>
+                  <CreditIcon className="h-5 w-5 text-yellow-500" />
+                  <span className="font-semibold text-sm">{t('creditsRemaining').replace('{count}', String(credits))}</span>
+              </div>
+            )}
+            
             {user && (
               <div className="flex items-center space-x-3">
                 <div className="h-8 w-8 rounded-full bg-blue-200 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold" title={`Logged in with ${user.name}`}>
@@ -304,13 +357,16 @@ const App: React.FC = () => {
              onNext={handleNextDestination}
              currentIndex={currentDestinationIndex}
              totalDestinations={destinations.length}
+             getDirectionsText={t('getDirections')}
+             prevDestinationAriaLabel={t('prevDestination')}
+             nextDestinationAriaLabel={t('nextDestination')}
             />
         </aside>
 
         <div className="flex-1 flex flex-col bg-black/20 dark:bg-black/40">
            <main ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 md:p-6">
                 <div className="max-w-4xl mx-auto">
-                {messages.length === 0 && !isLoading && <WelcomeScreen onPromptClick={handlePromptClick} prompts={EXAMPLE_PROMPTS} welcomeTitle={t('welcomeTitle')} welcomeSubtitle={t('welcomeSubtitle')} promptHeader={t('promptHeader')} />}
+                {messages.length === 0 && !isLoading && <WelcomeScreen onPromptClick={handlePromptClick} prompts={examplePrompts} welcomeTitle={t('welcomeTitle')} welcomeSubtitle={t('welcomeSubtitle')} promptHeader={t('promptHeader')} />}
                 <div className="space-y-6">
                     {messages.map((msg, index) => (
                     <ChatMessage key={index} message={msg} />
@@ -329,7 +385,7 @@ const App: React.FC = () => {
                     <p>{error}</p>
                     </div>
                 )}
-                <ChatInput onSendMessage={handleSendMessage} disabled={isInputDisabled} placeholder={t('inputPlaceholder')} />
+                <ChatInput onSendMessage={handleSendMessage} disabled={isInputDisabled} placeholder={isInputDisabled ? t('upgradeToContinue') : t('inputPlaceholder')} />
                 </div>
             </footer>
         </div>
@@ -337,11 +393,12 @@ const App: React.FC = () => {
       {isPaymentModalOpen && (
           <PaymentModal
             onClose={() => setIsPaymentModalOpen(false)}
-            onPurchase={handlePurchaseCredits}
+            onUpgrade={handlePurchasePremium}
             texts={{
                 paymentTitle: t('paymentTitle'),
                 paymentSubtitle: t('paymentSubtitle'),
-                howToAddCredits: t('howToAddCredits'),
+                howToUpgrade: t('howToUpgrade'),
+                premiumPrice: t('premiumPrice'),
                 payWithMomo: t('payWithMomo'),
                 payWithBank: t('payWithBank'),
                 paymentConfirmation: t('paymentConfirmation'),

@@ -16,9 +16,12 @@ interface MapComponentProps {
   onNext: () => void;
   currentIndex: number;
   totalDestinations: number;
+  getDirectionsText: string;
+  prevDestinationAriaLabel: string;
+  nextDestinationAriaLabel: string;
 }
 
-const MapComponent: React.FC<MapComponentProps> = ({ destination, onGetDirections, onPrev, onNext, currentIndex, totalDestinations }) => {
+const MapComponent: React.FC<MapComponentProps> = ({ destination, onGetDirections, onPrev, onNext, currentIndex, totalDestinations, getDirectionsText, prevDestinationAriaLabel, nextDestinationAriaLabel }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any | null>(null);
   const markerRef = useRef<any | null>(null);
@@ -76,7 +79,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ destination, onGetDirection
         iconSpan.innerHTML = renderToStaticMarkup(<DirectionsIcon className="h-4 w-4" />);
         button.appendChild(iconSpan);
         const textSpan = document.createElement('span');
-        textSpan.innerText = 'Get Directions';
+        textSpan.innerText = getDirectionsText;
         button.appendChild(textSpan);
 
         button.onclick = () => onGetDirections(destination);
@@ -86,7 +89,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ destination, onGetDirection
         
         mapRef.current.flyTo([lat, lng], 13); // Zoom into the location
     }
-  }, [destination, onGetDirections]);
+  }, [destination, onGetDirections, getDirectionsText]);
 
   return (
     <div className="relative h-full w-full">
@@ -97,7 +100,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ destination, onGetDirection
             onClick={onPrev}
             disabled={currentIndex <= 0}
             className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="Previous destination"
+            aria-label={prevDestinationAriaLabel}
           >
             <ChevronLeftIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
           </button>
@@ -108,7 +111,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ destination, onGetDirection
             onClick={onNext}
             disabled={currentIndex >= totalDestinations - 1}
             className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="Next destination"
+            aria-label={nextDestinationAriaLabel}
           >
             <ChevronRightIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
           </button>

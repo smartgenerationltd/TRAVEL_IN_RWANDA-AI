@@ -42,14 +42,3 @@ If the user seems lost or unsure, ask follow-up questions to guide them better. 
 When you identify a specific, mappable location in your response (like a national park, museum, or landmark), you **must** embed its details in the following format at the end of the sentence describing it: \`[MAP:latitude,longitude,Place Name]\`. For example: \`The Kigali Genocide Memorial is a must-visit. [MAP:-1.9436,30.0596,Kigali Genocide Memorial] It's a powerful experience.\` Use this for specific points of interest, not general areas like cities. Provide coordinates with at least 4 decimal places for accuracy.
 
 Do not give political or sensitive advice. Focus on verified and safe tourism information. Format your answers clearly, using markdown for lists, bolding, and italics to improve readability.`;
-
-export const EXAMPLE_PROMPTS = [
-    "Tell me about Rwanda's national parks.",
-    "Where is the Kigali Genocide Memorial?",
-    "What are the top 5 things to do in Kigali?",
-    "How do I get from Kigali to Volcanoes National Park?",
-    "Tell me about Rwandan food.",
-    "Is it safe to travel in Rwanda?",
-    "Can you teach me a few basic Kinyarwanda phrases?",
-    "Tell me about Rwanda's museums and their locations."
-];

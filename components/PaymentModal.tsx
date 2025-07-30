@@ -1,18 +1,19 @@
 
 import React, { useState } from 'react';
 import XIcon from './icons/XIcon';
-import CreditIcon from './icons/CreditIcon';
+import CrownIcon from './icons/CrownIcon';
 import MobileMoneyIcon from './icons/MobileMoneyIcon';
 import BankIcon from './icons/BankIcon';
 import CopyIcon from './icons/CopyIcon';
 
 interface PaymentModalProps {
   onClose: () => void;
-  onPurchase: () => void;
+  onUpgrade: () => void;
   texts: {
     paymentTitle: string;
     paymentSubtitle: string;
-    howToAddCredits: string;
+    howToUpgrade: string;
+    premiumPrice: string;
     payWithMomo: string;
     payWithBank: string;
     paymentConfirmation: string;
@@ -21,7 +22,7 @@ interface PaymentModalProps {
   };
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onPurchase, texts }) => {
+const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onUpgrade, texts }) => {
   const [copied, setCopied] = useState<'momo' | 'bank' | null>(null);
 
   const copyToClipboard = (text: string, type: 'momo' | 'bank') => {
@@ -53,15 +54,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onPurchase, texts 
           
           <div className="text-center">
             <div className={`inline-flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 dark:bg-yellow-900/50 mb-4`}>
-                <CreditIcon className="h-8 w-8 text-yellow-500" />
+                <CrownIcon className="h-8 w-8 text-yellow-500" />
             </div>
             <h2 id="payment-title" className="text-2xl font-bold text-gray-900 dark:text-white">{texts.paymentTitle}</h2>
             <p className="text-gray-500 dark:text-gray-400 mt-2 mb-8">{texts.paymentSubtitle}</p>
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-center text-gray-700 dark:text-gray-300">{texts.howToAddCredits}</h3>
+            <h3 className="text-lg font-semibold text-center text-gray-700 dark:text-gray-300">{texts.howToUpgrade}</h3>
             
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 text-center p-4 rounded-lg">
+                <p className="font-semibold text-blue-800 dark:text-blue-200">{texts.premiumPrice}</p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* MoMoPay Card */}
               <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200 dark:border-gray-600">
@@ -104,7 +109,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ onClose, onPurchase, texts 
 
             <div className="pt-6">
               <button
-                onClick={onPurchase}
+                onClick={onUpgrade}
                 className="w-full py-3 px-4 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-green-600 hover:bg-green-700 text-white focus:ring-green-500"
               >
                 {texts.paymentConfirmation}
