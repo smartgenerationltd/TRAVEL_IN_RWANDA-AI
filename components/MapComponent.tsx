@@ -4,34 +4,36 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { Destination } from '../types';
 import MapPinIcon from './icons/MapPinIcon';
 import DirectionsIcon from './icons/DirectionsIcon';
-import ChevronLeftIcon from './icons/ChevronLeftIcon';
-import ChevronRightIcon from './icons/ChevronRightIcon';
+import CrosshairIcon from './icons/CrosshairIcon';
 
 declare var L: any; // Use Leaflet from CDN
 
 interface MapComponentProps {
-  destination: Destination | null;
+  destinations: Destination[];
+  userLocation: { lat: number; lng: number } | null;
   onGetDirections: (destination: Destination) => void;
-  onPrev: () => void;
-  onNext: () => void;
-  currentIndex: number;
-  totalDestinations: number;
+  onRequestLocate: () => void;
   getDirectionsText: string;
-  prevDestinationAriaLabel: string;
-  nextDestinationAriaLabel: string;
 }
 
-const MapComponent: React.FC<MapComponentProps> = ({ destination, onGetDirections, onPrev, onNext, currentIndex, totalDestinations, getDirectionsText, prevDestinationAriaLabel, nextDestinationAriaLabel }) => {
+const MapComponent: React.FC<MapComponentProps> = ({ 
+  destinations, 
+  userLocation, 
+  onGetDirections, 
+  onRequestLocate, 
+  getDirectionsText 
+}) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any | null>(null);
-  const markerRef = useRef<any | null>(null);
+  const markerLayerRef = useRef<any | null>(null);
+  const userMarkerRef = useRef<any | null>(null);
 
   // Initialize map
   useEffect(() => {
     if (mapContainerRef.current && !mapRef.current) {
       const map = L.map(mapContainerRef.current, {
         center: [-1.9403, 29.8739], // Center of Rwanda
-        zoom: 8,
+        zoom: 9,
         zoomControl: false,
       });
 
@@ -42,39 +44,72 @@ const MapComponent: React.FC<MapComponentProps> = ({ destination, onGetDirection
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
       mapRef.current = map;
+      markerLayerRef.current = L.featureGroup().addTo(map);
     }
   }, []);
 
-  // Handle destination changes
+  // Handle user location marker
   useEffect(() => {
-    if (mapRef.current && destination) {
-        const { lat, lng, name } = destination;
-        const iconMarkup = renderToStaticMarkup(<MapPinIcon className="h-10 w-10 text-blue-600 drop-shadow-lg" />);
+    if (mapRef.current) {
+      if (userMarkerRef.current) {
+        mapRef.current.removeLayer(userMarkerRef.current);
+        userMarkerRef.current = null;
+      }
+
+      if (userLocation) {
+        const userIconMarkup = renderToStaticMarkup(
+          <div className="relative flex h-6 w-6 items-center justify-center -ml-3 -mt-3">
+             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+             <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-600 border-2 border-white shadow-sm"></span>
+          </div>
+        );
+
         const customIcon = L.divIcon({
-            html: iconMarkup,
-            className: '',
-            iconSize: [40, 40],
-            iconAnchor: [20, 40],
-            popupAnchor: [0, -40]
+          html: userIconMarkup,
+          className: 'bg-transparent',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
         });
 
-        // Remove old marker
-        if (markerRef.current) {
-            markerRef.current.remove();
+        const marker = L.marker([userLocation.lat, userLocation.lng], { icon: customIcon });
+        marker.bindPopup(`<div class="font-sans font-bold text-sm">You are here</div>`);
+        marker.addTo(mapRef.current);
+        userMarkerRef.current = marker;
+        
+        // If it's the first time finding location or no other destinations, fly to user
+        if (destinations.length === 0) {
+            mapRef.current.flyTo([userLocation.lat, userLocation.lng], 13);
         }
+      }
+    }
+  }, [userLocation, destinations.length]);
 
-        // Add new marker
-        markerRef.current = L.marker([lat, lng], { icon: customIcon }).addTo(mapRef.current);
+  // Handle destination changes
+  useEffect(() => {
+    if (mapRef.current && markerLayerRef.current) {
+      markerLayerRef.current.clearLayers();
 
-        // Create popup content
+      const iconMarkup = renderToStaticMarkup(<MapPinIcon className="h-10 w-10 text-red-600 drop-shadow-lg" />);
+      const customIcon = L.divIcon({
+          html: iconMarkup,
+          className: '',
+          iconSize: [40, 40],
+          iconAnchor: [20, 40],
+          popupAnchor: [0, -40]
+      });
+
+      destinations.forEach(destination => {
+        const { lat, lng, name } = destination;
+        const marker = L.marker([lat, lng], { icon: customIcon });
+
         const popupContent = document.createElement('div');
         popupContent.innerHTML = `
-            <div class="font-sans">
-                <h3 class="font-bold text-md mb-2">${name}</h3>
+            <div class="font-sans min-w-[150px]">
+                <h3 class="font-bold text-md mb-2 text-gray-800">${name}</h3>
             </div>
         `;
         const button = document.createElement('button');
-        button.className = "flex items-center space-x-2 w-full justify-center px-3 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500";
+        button.className = "flex items-center space-x-2 w-full justify-center px-3 py-2 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2";
         const iconSpan = document.createElement('span');
         iconSpan.innerHTML = renderToStaticMarkup(<DirectionsIcon className="h-4 w-4" />);
         button.appendChild(iconSpan);
@@ -85,38 +120,33 @@ const MapComponent: React.FC<MapComponentProps> = ({ destination, onGetDirection
         button.onclick = () => onGetDirections(destination);
         popupContent.appendChild(button);
 
-        markerRef.current.bindPopup(popupContent).openPopup();
-        
-        mapRef.current.flyTo([lat, lng], 13); // Zoom into the location
+        marker.bindPopup(popupContent);
+        markerLayerRef.current.addLayer(marker);
+      });
+      
+      if (destinations.length > 0) {
+        const bounds = markerLayerRef.current.getBounds();
+        // Include user location in bounds if available
+        if (userLocation) {
+             bounds.extend([userLocation.lat, userLocation.lng]);
+        }
+        mapRef.current.flyToBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+      }
     }
-  }, [destination, onGetDirections, getDirectionsText]);
+  }, [destinations, onGetDirections, getDirectionsText, userLocation]);
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full group">
       <div ref={mapContainerRef} className="h-full w-full bg-gray-200 dark:bg-gray-800" />
-      {totalDestinations > 1 && (
-        <div className="absolute bottom-4 left-4 z-[1000] flex items-center space-x-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-1 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <button
-            onClick={onPrev}
-            disabled={currentIndex <= 0}
-            className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label={prevDestinationAriaLabel}
-          >
-            <ChevronLeftIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          </button>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 px-2 tabular-nums">
-            {currentIndex + 1} / {totalDestinations}
-          </span>
-          <button
-            onClick={onNext}
-            disabled={currentIndex >= totalDestinations - 1}
-            className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label={nextDestinationAriaLabel}
-          >
-            <ChevronRightIcon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-          </button>
-        </div>
-      )}
+      
+      {/* Locate Me Button */}
+      <button
+        onClick={onRequestLocate}
+        className="absolute top-4 right-4 z-[400] bg-white dark:bg-gray-800 p-2 rounded-md shadow-md border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+        title="Show my location"
+      >
+        <CrosshairIcon className={`h-6 w-6 ${userLocation ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'}`} />
+      </button>
     </div>
   );
 };
